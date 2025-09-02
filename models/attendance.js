@@ -20,9 +20,13 @@ export const Attendance = mongoose.model('attendance', new mongoose.Schema({
         type: String,
         required: true
     },
+    special_id: {
+        type: String,
+        required: true
+    },
     signedAt: {
         type: Date,
-        default: Date.now   
+        default: Date.now  
     }
 }));
 

@@ -4,7 +4,9 @@ import auth from "../middlewares/auth.js";
 
 const router = Router();
 
-router.get('/:special_id/:lecturer_id', auth, getAttendances);
+//add auth middleware.
+
+router.get('/:special_id/:lecturer_id', getAttendances);
 router.post('/:special_id/sign', auth, markAttendance);
 
 export default router;

@@ -45,6 +45,7 @@ export async function markAttendance(req, res) {
     const newAttendanceObj = new Attendance(lodash.pick(req.body, ['fullName', 'matricNo']));
     newAttendanceObj.lecturer_id = attSessionObj.creator_id;
     newAttendanceObj.student_id = req.user._id;
+    newAttendanceObj.special_id = specialId;
 
     durationValid(attSessionObj);
     const attendanceObj = await newAttendanceObj.save();

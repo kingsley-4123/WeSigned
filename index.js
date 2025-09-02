@@ -1,6 +1,6 @@
 import express from 'express';
 import dotenv from 'dotenv';
-import logger from './logger.js/logs.js';
+import logger from './logger/logs.js';
 import routes from './startup/routes.js'
 import dbConnect from './startup/db.js';
 dotenv.config();
