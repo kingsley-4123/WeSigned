@@ -40,10 +40,6 @@ const userSchema = new mongoose.Schema({
         minlength: 5,
         required: true
     },
-    device_id: {
-        type: String,
-        required: true
-    },
     currentChallenge: String,          // store last challenge to verify
     credentials: [CredentialSchema],
 });
