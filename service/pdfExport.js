@@ -1,5 +1,6 @@
 import PdfPrinter from "pdfmake";
 import { Attendance } from "../models/attendance.js";
+import { AttendanceSession } from "../models/attendance_session.js";
 import dayjs from "dayjs";
 
 // ---- PDF Export ----
@@ -14,21 +15,26 @@ const fonts = {
 
 const printer = new PdfPrinter(fonts);
 
-export default async function(req, res) {
+export default async function pdfExport(req, res) {
     try {
         const { specialId, lecturerId } = req.params;
+
+         const attSession = await AttendanceSession.findOne({ special_id: specialId });
+        if (!attSession) return res.status(404).json({ message: "No session found." });
+        
         const students = await Attendance.find({ special_id:specialId, lecturer_id:lecturerId })
             .select('-__v -lecturer_id -student_id')
             .sort('full_name');
         if (!students) return res.status(401).json({ message: "No attedance record found." });
 
         const body = [
-        ["Full Name", "Signed At", "Student ID"],
-        ...students.map(s => [
-            s.matric_no,
-            s.full_name,
-            dayjs(s.signedAt).format("YYYY-MM-DD HH:mm"),
-        ]),
+            ["Serial No","Full Name", "Student ID", "Signed At"],
+            ...students.map((s, i) => [
+                i + 1,
+                s.full_name,
+                s.matric_no,
+                dayjs(s.signedAt).format("YYYY-MM-DD HH:mm"),
+            ]),
         ];
 
         const docDefinition = {
@@ -36,17 +42,17 @@ export default async function(req, res) {
         content: [
             { text: "Attendance Export", style: "header" },
             {
-            table: { headerRows: 1, widths: [80, 80, "*", 60, 80], body },
+            table: { headerRows: 1, widths: ["auto","*", "auto","auto"], body },
             layout: "lightHorizontalLines",
             },
         ],
-        styles: { header: { fontSize: 14, bold: true, margin: [0, 0, 0, 10] } },
-        defaultStyle: { font: "Helvetica", fontSize: 10 },
+        styles: { header: { fontSize: 18, bold: true, margin: [0, 0, 0, 10] } },
+        defaultStyle: { font: "Helvetica", fontSize: 14 },
         };
 
         const pdfDoc = printer.createPdfKitDocument(docDefinition);
         res.setHeader("Content-Type", "application/pdf");
-        res.attachment(`attendance_${dayjs().format("YYYY-MM-DD_HH-mm")}.pdf`);
+        res.attachment(`${attSession.attendance_name}_${dayjs().format("YYYY-MM-DD_HH-mm")}.pdf`);
 
         pdfDoc.pipe(res);
         pdfDoc.end();
