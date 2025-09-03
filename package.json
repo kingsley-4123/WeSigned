@@ -26,8 +26,7 @@
     "jsonwebtoken": "^9.0.2",
     "lodash": "^4.17.21",
     "mongoose": "^8.16.4",
-    "pdfmake": "^0.2.20",
-    "winston": "^3.17.0"
+    "pdfmake": "^0.2.20"
   },
   "devDependencies": {
     "jest": "^30.0.5",
