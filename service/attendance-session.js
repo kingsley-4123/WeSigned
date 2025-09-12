@@ -1,6 +1,8 @@
 import { AttendanceSession, validateSession } from "../models/attendance_session.js";
 import createUniqueSpecialId from "../utils/attendance-special-id-generator.js";
+import { User } from "../models/user.js";
 import { remainingTime } from "../utils/attendance-duration-calculator.js";
+import deleteOldDocuments from "../utils/deleteOldDocuments.js";
 import lodash from 'lodash';
 
 export async function getAttendanceSession(req, res) {
@@ -31,6 +33,28 @@ export async function createSession(req, res) {
         }
     }); 
 
-    const attSession = lodash.pick(sessionObj, ['lecturer_id', 'special_id', 'duration']);
-    return res.json(attSession);
+    let lecturer = await User.findById(req.user._id);
+    if (!lecturer) return res.status(404).send('Lecturer not found.');
+    lecturer = lodash.pick(lecturer, ['firstname', 'middlename', 'surname']);
+    lecturer = `${lecturer.surname} ${lecturer.middlename ? lecturer.middlename + ' ' : ''}${lecturer.firstname}`;  
+
+    const today = new Date();
+    const options = { weekday: 'short', year: 'numeric', month: 'long', day: 'numeric' };
+    const formattedDate = today.toLocaleDateString('en-US', options).replace(","," ");
+
+    const attSession = lodash.pick(sessionObj, ['lecturer_id', 'special_id', 'duration', 'attendance_name']);
+    return res.json({
+        attSession,
+        lecturer,
+        date: formattedDate,
+        message: "Session created successfully."
+    });
 }
+
+/**
+ * import the node-cron package.
+ * 
+ * cron.schedule('0 0 * * *', ()=>{
+ *  deleteOldDocuments(AttendanceSession);
+ * });
+ */

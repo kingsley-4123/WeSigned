@@ -39,11 +39,10 @@ async function verifyAuthResponse (req, res) {
     // Ensure the user has a valid currentChallenge
     if (typeof user.currentChallenge !== 'string') return res.status(400).json({ error: 'Invalid challenge format' });
 
-
     const expectedChallenge = user.currentChallenge;
 
     // Find the matching authenticator by credentialID
-    const credID = toB64(Buffer.from(req.body.rawId, 'base64url'));
+    const credID = toB64(req.body.rawId);
     const authenticator = user.credentials.find(c => c.credentialID === credID);
     if (!authenticator) return res.status(400).json({ error: 'Unknown credential' });
 

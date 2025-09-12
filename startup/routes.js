@@ -7,13 +7,15 @@ import attendanceSession from '../routes/attendance_session.js';
 import excelExport from '../routes/excelExport.js';
 import pdfExport from '../routes/pdfExport.js';
 import attendance from '../routes/attendance.js';
+import otpRoutes from '../routes/otp_sender.js';
+import reRegistration from '../routes/re-registration.js';
 import user from '../routes/user.js'
 import helmet from 'helmet';
 
 function routeHandler(app) {
   app.use(express.json());
   app.use(helmet());
-  app.use(cors({ origin: process.env.ORIGIN, credentials: true }));
+  app.use(cors({ origin: ['http://localhost:3000', 'https://664e40aa1bfe.ngrok-free.app'], credentials: true }));
   app.use(cookieSession({
     name: 'sess',
     keys: [process.env.SESSION_SECRET],
@@ -27,6 +29,8 @@ function routeHandler(app) {
   app.use('/api/attendance-session', attendanceSession);
   app.use('/api/attendance', attendance);
   app.use('/api/login', login);
+  app.use('/api/otp', otpRoutes);
+  app.use('/api/re-register', reRegistration);
   app.use(error); 
 }
 

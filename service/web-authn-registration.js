@@ -1,29 +1,31 @@
 import { generateRegistrationOptions, verifyRegistrationResponse,} from '@simplewebauthn/server';
 import { User } from '../models/user.js';
-import { toB64, fromB64 } from '../utils/b64.js';
+import { toB64 } from '../utils/b64.js';
 import { isoUint8Array } from '@simplewebauthn/server/helpers'; 
 // --- 1) REGISTRATION (create a biometric-bound credential) ---
 
 // Step A: Get registration options
 export async function getRegistrationOptions (userId) {
-  if (!userId) return res.status(401).json({ error: 'User not available.' });
+  if (!userId) return res.status(404).json({ error: 'User not available.' });
 
   const user = await User.findById(userId);
+  if (!user) return res.status(400).json({ message: "User not available." });
+
+  console.log(user);
+
   const options = await generateRegistrationOptions({
     rpName: process.env.RP_NAME,
     rpID: process.env.RP_ID,
     userID: isoUint8Array.fromUTF8String(user._id.toString()),
     userName: user.email,
-    // Encourage true biometrics on the same device
+    attestationType: 'none',
     authenticatorSelection: {
-      residentKey: 'preferred',
       userVerification: 'required',
+      residentKey: 'required',
       authenticatorAttachment: 'platform', // prefer platform (TouchID/FaceID/Android)
     },
-    attestationType: 'none', // keep simple (no attestation privacy headaches)
     excludeCredentials: user.credentials.map((cred) => ({
-      id: fromB64(cred.credentialID),
-      type: 'public-key',
+      id: cred.credentialID,
       transports: cred.transports || [],
     })),
   });
@@ -49,34 +51,23 @@ export async function verifyRegResponse (req, res)  {
 
   if (!verification.verified) return res.status(400).json({ ok: false });
 
-    const { registrationInfo } = verification;
-    if (!registrationInfo) return res.status(400).json({ error: 'Invalid registration response' });
-    // Ensure the user has a valid registrationInfo
-    if (!registrationInfo.credentialID || !registrationInfo.credentialPublicKey) {
-      return res.status(400).json({ error: 'Missing credential information' });
-    }
-    // Ensure the credentialID and credentialPublicKey are valid
-    if (typeof registrationInfo.credentialID !== 'string' || typeof registrationInfo.credentialPublicKey !== 'string') {
-      return res.status(400).json({ error: 'Invalid credential format' });
-    }
-    // Ensure the counter is a number
-    if (typeof registrationInfo.counter !== 'number') {
-      return res.status(400).json({ error: 'Invalid counter value' });
-    }
+  const { registrationInfo } = verification;
+  if (!registrationInfo) return res.status(400).json({ error: 'Invalid registration response' });
 
   const {
-      credentialID, 
-      credentialPublicKey,
-      counter,
-  } = registrationInfo;
+    id, 
+    publicKey,
+    counter,
+    transports
+  } = registrationInfo.credential;
 
     // 👇 THIS is where you "store the public key" (and related info) in DB
     user.credentials.push({
-    credentialID: toB64(credentialID),
-    credentialPublicKey: toB64(credentialPublicKey),
+    credentialID: toB64(id),
+    credentialPublicKey: toB64(publicKey),
     counter,
-    transports: req.body?.response?.transports || [],
-    deviceLabel: req.headers['user-agent']?.slice(0, 80) || 'Unknown Device',
+    transports: transports || [],
+    deviceType: registrationInfo.credentialDeviceType
   });
     // Clear the challenge after successful registration
     user.currentChallenge = undefined;
@@ -86,6 +77,6 @@ export async function verifyRegResponse (req, res)  {
     const token = user.generateToken();
 
     // Send the token in the response header and JSON body
-    res.header('x-auth-token', token).json({ ok: true, userId, credentialID: toB64(credentialID) });
+    res.header('x-auth-token', token).json({ ok: true});
     // ✅ At this point the user is registered with a biometric-bound credential
 }

@@ -8,10 +8,7 @@ async function verifyUser(req, res) {
     if (error) return res.status(400).send(error.details[0].message);
 
     const user = await User.findOne({ email: req.body.email });
-    if (!user) return res.status(401).send('Invalid email or password.');
-
-    const isValid = await bcrypt.compare(req.body.password, user.password);
-    if (!isValid) return res.status(400).send('Invalid email or Password.');
+    if (!user) return res.status(401).send('Invalid email.');
 
     req.session.userId = user._id; // Store user ID in session
 
@@ -21,7 +18,7 @@ async function verifyUser(req, res) {
     await user.save();
     // Return authentication options to the client
     res.json({
-        options: authOptions,
+        authOptions,
         userId: user._id,
     });
 
@@ -29,8 +26,7 @@ async function verifyUser(req, res) {
 
 function validateLogin(credentials) {
     const schema = Joi.object({
-        email: Joi.string().email().min(5).max(255).required(),
-        password: Joi.string().min(5).required()
+        email: Joi.string().email().min(5).max(255).required()
     });
 
     return schema.validate(credentials);

@@ -6,12 +6,12 @@ import { AttendanceSession } from '../models/attendance_session.js';
 // ---- Excel Export ---
 export default async function excelExport(req, res) {
     try {
-        const { specialId, lecturerId } = req.params;
+        const { specialId } = req.params;
 
         const attSession = await AttendanceSession.findOne({ special_id: specialId });
         if (!attSession) return res.status(404).json({ message: "No session found." });
 
-        const students = await Attendance.find({ special_id:specialId, lecturer_id:lecturerId })
+        const students = await Attendance.find({ special_id:specialId, lecturer_id:attSession.creator_id })
             .select('-__v -lecturer_id -student_id')
             .sort('full_name');
         if (!students) return res.status(404).json({ message: "No attedance record found." });

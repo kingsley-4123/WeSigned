@@ -6,7 +6,7 @@ const router = Router();
 
 //add auth middleware.
 
-router.get('/:special_id/:lecturer_id', getAttendances);
+router.get('/:special_id/:lecturer_id', auth, getAttendances);
 router.post('/:special_id/sign', auth, markAttendance);
 
 export default router;

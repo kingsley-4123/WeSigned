@@ -2,12 +2,12 @@ import mongoose from "mongoose";
 import Joi from "joi";
 import jwt from 'jsonwebtoken';
 
-const CredentialSchema = new mongoose.Schema({
+const credentialSchema = new mongoose.Schema({
   credentialID: { type: String, required: true },          // base64url
   credentialPublicKey: { type: String, required: true },   // base64url
   counter: { type: Number, default: 0 },
   transports: [String],                                     // optional
-  deviceLabel: { type: String },                            // optional (e.g., "John’s Phone")
+  deviceType: { type: String },                            // optional (e.g., "John’s Phone")
 }, { _id: false });
 
 const userSchema = new mongoose.Schema({
@@ -41,7 +41,7 @@ const userSchema = new mongoose.Schema({
         required: true
     },
     currentChallenge: String,          // store last challenge to verify
-    credentials: [CredentialSchema],
+    credentials: [credentialSchema],
 });
 
 userSchema.methods.generateToken = function () {

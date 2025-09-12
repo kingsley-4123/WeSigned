@@ -24,7 +24,7 @@ export const Attendance = mongoose.model('attendance', new mongoose.Schema({
         type: String,
         required: true
     },
-    signedAt: {
+    createdAt: {
         type: Date,
         default: Date.now  
     }

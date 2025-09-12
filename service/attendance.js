@@ -2,13 +2,14 @@ import { AttendanceSession } from "../models/attendance_session.js";
 import { Attendance, validateAttendance } from "../models/attendance.js";
 import { User } from "../models/user.js";   
 import { durationValid} from "../utils/attendance-duration-calculator.js";
+import deleteOldDocuments from "../utils/deleteOldDocuments.js";
 import lodash from 'lodash';
 
 
 export async function getAttendances(req, res) {
-    const {specialId, lecturerId} = req.params;
+    const {specialId } = req.params;
 
-    const attendanceList = await Attendance.find({ specialId, lecturerId })
+    const attendanceList = await Attendance.find({ special_id: specialId, lecturer_id: req.user._id  })
         .select('-__v -lecturer_id -student_id')
         .sort({ full_name: 1 }); // Sort by full_name in ascending order
     
@@ -22,7 +23,7 @@ export async function markAttendance(req, res) {
     if (error) return res.status(400).send(error.details[0].message);
     
     const { specialId } = req.params;
-    const attSessionObj = await AttendanceSession.findOne(specialId);
+    const attSessionObj = await AttendanceSession.findOne({special_id: specialId});
     if (!attSessionObj) return res.status(401).send('Attendance with the given ID was not found.');
 
     const alreadyMarked = await Attendance.findOne({ lecturer_id: attSessionObj.creator_id, student_id: req.user._id });
@@ -51,7 +52,7 @@ export async function markAttendance(req, res) {
     const attendanceObj = await newAttendanceObj.save();
     if (!attendanceObj) return res.status(500).send('Attendance not marked.');
 
-    let lecturer = await User.findById(attSessionObj.creator_id);
+    let lecturer = await User.findById({_id: attSessionObj.creator_id});
     if (!lecturer) return res.status(404).send('Lecturer not found.');
     lecturer = lodash.pick(lecturer, ['firstname', 'middlename', 'surname']);
     lecturer = `${lecturer.surname} ${lecturer.middlename ? lecturer.middlename + ' ' : ''}${lecturer.firstname}`;  
@@ -70,3 +71,11 @@ export async function markAttendance(req, res) {
         message: 'Attendance marked successfully.'
     });
 }
+
+/**
+ * import the node-cron package.
+ * 
+ * cron.schedule('0 0 * * *', ()=>{
+ *  deleteOldDocuments(Attendance);
+ * });
+ */

@@ -1,6 +1,3 @@
-import { isoBase64URL } from "@simplewebauthn/server/helpers";
-
-const toB64 = (buf) => isoBase64URL.encode(Buffer.from(buf));
-const fromB64 = (str) => Buffer.from(isoBase64URL.toBuffer(str));   
-
+const toB64 = (buf) => Buffer.from(buf).toString('base64url');  //Convert to base64URL
+const fromB64 = (str) => Buffer.from(str, 'base64url');           // Convert back to Buffer
 export { toB64, fromB64 };
