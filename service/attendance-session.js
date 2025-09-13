@@ -2,7 +2,6 @@ import { AttendanceSession, validateSession } from "../models/attendance_session
 import createUniqueSpecialId from "../utils/attendance-special-id-generator.js";
 import { User } from "../models/user.js";
 import { remainingTime } from "../utils/attendance-duration-calculator.js";
-import deleteOldDocuments from "../utils/deleteOldDocuments.js";
 import lodash from 'lodash';
 
 export async function getAttendanceSession(req, res) {
@@ -50,11 +49,3 @@ export async function createSession(req, res) {
         message: "Session created successfully."
     });
 }
-
-/**
- * import the node-cron package.
- * 
- * cron.schedule('0 0 * * *', ()=>{
- *  deleteOldDocuments(AttendanceSession);
- * });
- */

@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import Joi from 'joi';
 
-export const Attendance = mongoose.model('attendance', new mongoose.Schema({
+const attendanceSchema = new mongoose.Schema({
     full_name: {
         type: String,
         minlength: 10,
@@ -24,11 +24,17 @@ export const Attendance = mongoose.model('attendance', new mongoose.Schema({
         type: String,
         required: true
     },
-    createdAt: {
+    signedAt: {
         type: Date,
         default: Date.now  
     }
-}));
+});
+
+const sixMonthsInSeconds = 6 * 30 * 24 * 60 * 60;
+
+attendanceSchema.index({ signedAt: 1 }, { expireAfterSeconds: sixMonthsInSeconds });
+
+export const Attendance = mongoose.model('attendance', attendanceSchema);
 
 export function validateAttendance(attendance) {
     const schema = Joi.object({

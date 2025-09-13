@@ -49,6 +49,10 @@ const attendanceSchema = new mongoose.Schema({
 
 attendanceSchema.index({ location: '2dsphere' }); // Enable geospatial queries
 
+const sixMonthsInSeconds = 6 * 30 * 24 * 60 * 60;
+
+attendanceSchema.index({ createdAt: 1 }, { expireAfterSeconds: sixMonthsInSeconds });
+
 export const AttendanceSession = mongoose.model('attendance-session', attendanceSchema);
 
 export function validateSession(session) {

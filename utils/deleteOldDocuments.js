@@ -1,13 +1,7 @@
-async function deleteOldDocuments(collection){
-    try{
-        const sixMonthsAgo = new Date();
-        sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+import { Attendance } from "../models/attendance.js";
 
-        const result = await collection.deleteMany({ createdAt: { $lt: sixMonthsAgo } });
-        console.log(`Deleted ${result.deletedCount} documents`);
-    } catch (error) {
-        console.error(error);
-    }
-}
-
-export default deleteOldDocuments;
+(async () => {
+    await Attendance.collection.getIndexes().then(indexes => {
+        console.log(indexes);
+    }).catch(err => console.error(err));
+})();

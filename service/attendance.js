@@ -2,7 +2,6 @@ import { AttendanceSession } from "../models/attendance_session.js";
 import { Attendance, validateAttendance } from "../models/attendance.js";
 import { User } from "../models/user.js";   
 import { durationValid} from "../utils/attendance-duration-calculator.js";
-import deleteOldDocuments from "../utils/deleteOldDocuments.js";
 import lodash from 'lodash';
 
 
@@ -71,11 +70,3 @@ export async function markAttendance(req, res) {
         message: 'Attendance marked successfully.'
     });
 }
-
-/**
- * import the node-cron package.
- * 
- * cron.schedule('0 0 * * *', ()=>{
- *  deleteOldDocuments(Attendance);
- * });
- */
