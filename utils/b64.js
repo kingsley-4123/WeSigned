@@ -1,3 +1,9 @@
-const toB64 = (buf) => Buffer.from(buf).toString('base64url');  //Convert to base64URL
-const fromB64 = (str) => Buffer.from(str, 'base64url');           // Convert back to Buffer
-export { toB64, fromB64 };
+const toBase64 = (str) => {
+	  return Buffer.from(str).toString('base64url');
+}
+
+const fromBase64 = (b64) => {
+	  return Buffer.from(b64, 'base64url');
+}
+
+export { toBase64, fromBase64 };

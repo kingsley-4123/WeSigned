@@ -15,7 +15,7 @@ import helmet from 'helmet';
 function routeHandler(app) {
   app.use(express.json());
   app.use(helmet());
-  app.use(cors({ origin: ['http://localhost:3000', 'https://664e40aa1bfe.ngrok-free.app'], credentials: true }));
+  app.use(cors({ origin: 'https://cf78c97fbe27.ngrok-free.app', credentials: true }));
   app.use(cookieSession({
     name: 'sess',
     keys: [process.env.SESSION_SECRET],

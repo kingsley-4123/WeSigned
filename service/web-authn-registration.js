@@ -1,6 +1,6 @@
 import { generateRegistrationOptions, verifyRegistrationResponse,} from '@simplewebauthn/server';
 import { User } from '../models/user.js';
-import { toB64 } from '../utils/b64.js';
+import { toBase64 } from '../utils/b64.js';
 import { isoUint8Array } from '@simplewebauthn/server/helpers'; 
 // --- 1) REGISTRATION (create a biometric-bound credential) ---
 
@@ -29,7 +29,7 @@ export async function getRegistrationOptions (userId) {
       transports: cred.transports || [],
     })),
   });
-  
+  console.log(process.env.RP_ID);
   return options;
 };
 
@@ -42,8 +42,10 @@ export async function verifyRegResponse (req, res)  {
   const user = await User.findById(userId);
   const expectedChallenge = user.currentChallenge;
 
+  console.log(req.body);
+
   const verification = await verifyRegistrationResponse({
-    response: req.body, // object from the browser
+    response: req.body.registrationResponse, // object from the browser
     expectedChallenge,
     expectedOrigin: process.env.ORIGIN,
     expectedRPID: process.env.RP_ID,
@@ -54,6 +56,8 @@ export async function verifyRegResponse (req, res)  {
   const { registrationInfo } = verification;
   if (!registrationInfo) return res.status(400).json({ error: 'Invalid registration response' });
 
+  console.log(registrationInfo);
+
   const {
     id, 
     publicKey,
@@ -61,10 +65,13 @@ export async function verifyRegResponse (req, res)  {
     transports
   } = registrationInfo.credential;
 
+  console.log("CredentialId", typeof id);
+  console.log("publickey", typeof publicKey);
+
     // 👇 THIS is where you "store the public key" (and related info) in DB
     user.credentials.push({
-    credentialID: toB64(id),
-    credentialPublicKey: toB64(publicKey),
+    credentialID: toBase64(id),
+    credentialPublicKey: toBase64(publicKey),
     counter,
     transports: transports || [],
     deviceType: registrationInfo.credentialDeviceType

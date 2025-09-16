@@ -5,7 +5,11 @@ async function sendOTPMail(email, otp) {
     const options = {
         method: 'POST',
         headers: {'Content-Type': 'application/json', Authorization: `Bearer ${process.env.PLUNK_SECRET_KEY}`},
-        body: `{to:${email}, subject:${otp}, body: Your OTP is ${otp}. It expires in 5 minutes. }`
+        body: JSON.stringify({
+            to: email,
+            subject: otp,
+            body: "Your code expires in 5 minutes."
+        }), 
     };
 
     try {
@@ -23,31 +27,35 @@ function otpGenerator() {
     return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
+let userEmail;
+
 export async function sendOTP(req, res) {
-    const email = req.body.email;
+    userEmail = req.body.email;
     const otp = otpGenerator();
 
     const newOTP = new OTP({
-        email,
+        email: userEmail,
         otp,
         expires: Date.now() + 5 * 60 * 1000
     });
     await newOTP.save();
 
-    const result = await sendOTPMail(email, otp);
+    const result = await sendOTPMail(userEmail, otp);
     return res.json({ message: result });
 }
 
 export async function verifyOTP(req, res) {
-    const { email, otp } = req.body;
-    const user = await OTP.findOne({ email: email });
-    if (!user || user.otp !== otp || user.expires < Date.now()) {
-        return res.status(400).json({
-                success: false,
-                message: "Invalid or expired OTP"
-            });
-    }
+    const { otp } = req.body;
+    console.log("OTP verification Email", userEmail);
     
-    await OTP.deleteOne({ email: email });
-    res.json({ success: true, message: "OTP verified successfully" });
+    const user = await OTP.findOne({ email: userEmail, otp: otp });
+    console.log("OTP", otp);
+    console.log("User Otp", user.otp);
+    console.log(typeof user.otp, typeof otp);
+    if (!user) return res.status(400).json({ success: false, message: "User not available." });
+    if (user.expires < Date.now()) return res.status(400).json({success: false, message: "OTP code expired."});
+    if(user.otp !== otp) return res.status(400).json({success: false, message: "Invalid Code."});
+    
+    await OTP.deleteOne({ email: userEmail });
+    res.json({ success: true, message: "OTP verified successfully", email: userEmail });
 }

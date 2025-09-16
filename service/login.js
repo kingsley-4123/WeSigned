@@ -16,7 +16,7 @@ async function verifyUser(req, res) {
     if (!authOptions) return res.status(400).send('No authentication options available.');
     user.currentChallenge = authOptions.challenge; // Store challenge for later verification
     await user.save();
-    // Return authentication options to the client
+    // Return authentication options to the clientR
     res.json({
         authOptions,
         userId: user._id,

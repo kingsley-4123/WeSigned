@@ -1,6 +1,6 @@
 import { generateAuthenticationOptions, verifyAuthenticationResponse } from "@simplewebauthn/server";
 import { User } from '../models/user.js';
-import { toB64, fromB64 } from '../utils/b64.js';
+import { toBase64, fromBase64 } from '../utils/b64.js';
 
 // Step A: Get authentication options
 async function getAuthenticationOptions(userId) {
@@ -15,8 +15,7 @@ async function getAuthenticationOptions(userId) {
         rpID: process.env.RP_ID,
         userVerification: 'required',
         allowCredentials: user.credentials.map((cred) => ({
-            id: fromB64(cred.credentialID),
-            type: 'public-key',
+            id: cred.credentialID,
             transports: cred.transports || [],
         })),
     });
@@ -41,19 +40,20 @@ async function verifyAuthResponse (req, res) {
 
     const expectedChallenge = user.currentChallenge;
 
+    console.log(req.body.loginResponse);
     // Find the matching authenticator by credentialID
-    const credID = toB64(req.body.rawId);
+    const credID = toBase64(req.body.loginResponse.rawId);
     const authenticator = user.credentials.find(c => c.credentialID === credID);
     if (!authenticator) return res.status(400).json({ error: 'Unknown credential' });
 
     const verification = await verifyAuthenticationResponse({
-        response: req.body,
+        response: req.body.loginResponse,
         expectedChallenge,
         expectedOrigin: process.env.ORIGIN,
         expectedRPID: process.env.RP_ID,
         authenticator: {
-            credentialID: fromB64(authenticator.credentialID),
-            credentialPublicKey: fromB64(authenticator.credentialPublicKey),
+            credentialID: fromBase64(authenticator.credentialID),
+            credentialPublicKey: fromBase64(authenticator.credentialPublicKey),
             counter: authenticator.counter,
             transports: authenticator.transports || [],
         },

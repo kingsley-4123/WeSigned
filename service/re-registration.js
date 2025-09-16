@@ -1,5 +1,6 @@
 import { getRegistrationOptions } from "./web-authn-registration.js";
 import { User } from "../models/user.js";
+import lodash from 'lodash'
 
 export default async function reRegister(req, res){
     const { email } = req.body;
