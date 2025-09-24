@@ -18,27 +18,22 @@ const attendanceSchema = new mongoose.Schema({
     },
     duration: {
         type: Number, // in minutes or milliseconds – your choice
-        required: true
     },
     duration_unit: {
         type: String,
-        enum: ['hours', 'minutes', 'seconds'],
-        required: true
+        enum: ['hours', 'minutes', 'seconds']
     },
     range: {
         type: Number, // in meters, e.g., 100
-        required: true,
         default: 100
     },
     location: {
         type: {
             type: String,
-            enum: ['Point'],
-            required: true
+            enum: ['Point']
         },
         coordinates: {
             type: [Number], // [longitude, latitude]
-            required: true
         }
     },
     createdAt: {

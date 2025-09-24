@@ -14,7 +14,6 @@ const attendanceSchema = new mongoose.Schema({
     },
     lecturer_id: {
         type: String,
-        required: true
     },
     student_id: {
         type: String,
@@ -23,6 +22,9 @@ const attendanceSchema = new mongoose.Schema({
     special_id: {
         type: String,
         required: true
+    },
+    attendance_name: {
+        type: String
     },
     signedAt: {
         type: Date,

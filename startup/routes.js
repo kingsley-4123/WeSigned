@@ -9,6 +9,7 @@ import pdfExport from '../routes/pdfExport.js';
 import attendance from '../routes/attendance.js';
 import otpRoutes from '../routes/otp_sender.js';
 import reRegistration from '../routes/re-registration.js';
+import syncRoutes from '../routes/sync.js';
 import user from '../routes/user.js'
 import helmet from 'helmet';
 
@@ -31,6 +32,7 @@ function routeHandler(app) {
   app.use('/api/login', login);
   app.use('/api/otp', otpRoutes);
   app.use('/api/re-register', reRegistration);
+  app.use('/api/sync', syncRoutes);
   app.use(error); 
 }
 

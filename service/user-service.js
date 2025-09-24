@@ -22,8 +22,10 @@ async function createUser(req, res) {
     
         user.currentChallenge = options.challenge; // Store challenge for later verification
         await user.save(); // Save the challenge in the user document
+        const userID = bcrypt.hash(user._id, 12);
         res.json({
             user: lodash.pick(user, ['firstname', 'middlename', 'surname', 'email']),
+            userID,
             options
         });
     } else if (existByEmail && existByEmail.credentials.length === 0) {
@@ -33,8 +35,10 @@ async function createUser(req, res) {
     
         existByEmail.currentChallenge = options.challenge; // Store challenge for later verification
         await existByEmail.save(); // Save the challenge in the user document
+        const userID = bcrypt.hash(existByEmail._id, 12);
         res.json({
             user: lodash.pick(existByEmail, ['firstname', 'middlename', 'surname', 'email']),
+            userID,
             options
         });
     } else {

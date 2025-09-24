@@ -26,7 +26,9 @@
     "jsonwebtoken": "^9.0.2",
     "lodash": "^4.17.21",
     "mongoose": "^8.16.4",
-    "pdfmake": "^0.2.20"
+    "nanoid": "^5.1.5",
+    "pdfmake": "^0.2.20",
+    "qrcode": "^1.5.4"
   },
   "devDependencies": {
     "@eslint/js": "^9.34.0",
