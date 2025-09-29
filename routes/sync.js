@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { syncAttendance, syncSession, getSyncedAttendance } from "../service/sync";
-import auth from "../middlewares/auth";
+import { syncAttendance, syncSession, getSyncedAttendance } from "../service/sync.js";
+import auth from "../middlewares/auth.js";
 
 const router = Router();
 

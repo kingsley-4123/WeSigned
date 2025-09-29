@@ -1,6 +1,5 @@
-import { Attendance } from "../models/attendance";
-import { AttendanceSession } from "../models/attendance_session";
-import bcrypt from "bcrypt";
+import { Attendance } from "../models/attendance.js";
+import { AttendanceSession } from "../models/attendance_session.js";
 
 export async function syncAttendance(req, res) {
     try {
@@ -37,7 +36,7 @@ export async function syncSession(req, res) {
             creatorr_id: record.lecturerId,
             attendance_name: record.attendanceName,
             special_id: record.id,
-            createdAt: record.createdAt,
+            createdAt: record.expiresAt,
             duration_unit: record.unit,
             duration: record.duration,
             range: 0,

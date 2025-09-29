@@ -1,6 +1,7 @@
 import bcrypt from 'bcrypt';
 import { User } from '../models/user.js';
 import Joi from 'joi';
+import lodash from 'lodash';
 import { getAuthenticationOptions } from './web-authn-authentication.js';
 
 async function verifyUser(req, res) {
@@ -15,10 +16,12 @@ async function verifyUser(req, res) {
     const authOptions = await getAuthenticationOptions(user._id);
     if (!authOptions) return res.status(400).send('No authentication options available.');
     user.currentChallenge = authOptions.challenge; // Store challenge for later verification
+    const signedInUser = lodash.pick(user, ['firstname', 'middlename', 'surname', 'email']);
     await user.save();
     // Return authentication options to the clientR
     res.json({
         authOptions,
+        user: signedInUser,
         userId: user._id,
     });
 

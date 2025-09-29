@@ -1,2 +1,0 @@
-http://localhost:5000/api/attendance.xlsx/ABC123/lec1
-http://localhost:5000/api/attendance.pdf/ABC123/lec1
