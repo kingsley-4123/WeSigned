@@ -4,7 +4,7 @@ import Joi from "joi";
 const attendanceSchema = new mongoose.Schema({
     creator_id: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User', // assuming your user/lecturer model is 'User'
+        ref: 'users', // assuming your user/lecturer model is 'User'
         required: true
     },
     attendance_name: {
