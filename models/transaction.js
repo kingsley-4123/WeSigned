@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import Joi, { required } from "joi";
+import Joi from "joi";
 
 const transactionSchema = new mongoose.Schema({
   payedBy: { type: mongoose.Schema.Types.ObjectId, ref: "users", required: true },
@@ -12,6 +12,8 @@ const transactionSchema = new mongoose.Schema({
   status: { type: String, default: "pending" }, // pending | success | failed
   createdAt: { type: Date, default: Date.now }
 });
+
+transactionSchema.index({ payedBy: 1, createdAt: -1 }, {partialFilterExpression: { status: "success" }});
 
 export const Transaction = mongoose.model("Transaction", transactionSchema);
 

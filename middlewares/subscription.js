@@ -15,8 +15,8 @@ export default async function checkSub(req, res, next) {
         }
         
         // Fetch the latest successful transaction for the user
-        const latestTransaction = await Transaction.findOne({ payedBy: userId }).sort({ createdAt: -1 });
-        if (!latestTransaction || latestTransaction.status !== 'success' || latestTransaction.expires < Date.now()) {
+        const latestTransaction = await Transaction.findOne({ payedBy: userId, status: "success" }).sort({ createdAt: -1 });
+        if (!latestTransaction || latestTransaction.expires < Date.now()) {
             return res.status(403).json({ message: 'Subscription expired or no valid transaction found. Please renew to continue.' });
         }
 		

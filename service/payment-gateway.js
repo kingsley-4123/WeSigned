@@ -3,6 +3,7 @@ import { nanoid } from "nanoid";
 import {Transaction, validateTransaction} from "../models/transaction.js"; // path to your schema
 import getSubscriptionExpiryTimestamp from '../utils/subscription-timestamp.js';
 import dotenv from "dotenv";
+import mongoose from 'mongoose';  
 dotenv.config();
 
 export async function createPaymentIntent(req, res) {
@@ -14,7 +15,7 @@ export async function createPaymentIntent(req, res) {
       return res.status(400).json({ message: error.details[0].message });
     }
 
-        const randomReference = `ref-${nanoid(10)}`;
+        const randomReference = `ref-${nanoid(20)}`;
         const { amount, currency, customerEmail, customerName, customerPhone, description } = req.body;
         const paymentData = JSON.stringify({
             amount,
@@ -23,18 +24,18 @@ export async function createPaymentIntent(req, res) {
             customerName,
             customerEmail,
             customerPhoneNumber: customerPhone,
-            redirectUrl: process.env.ERCAS_CALLBACK_URL,
+            redirectUrl: "https://example.com",
             description,
             currency,
             feeBearer: "customer",
             metadata: {
-                firstname: customerName.split(" ")[0],
-                lastname: customerName.split(" ")[1],
-                email: customerEmail
+              firstname: customerName.split(" ")[0],
+              lastname: customerName.split(" ")[1],
+              email: customerEmail
             }
-        });
+          });
 
-        const response = await axios.post(process.env.ERCASPAY_TEST_URL + '/payment/initiate', paymentData, {
+        const response = await axios.post(`${process.env.ERCASPAY_TEST_URL}/payment/initiate`, paymentData, {
             headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
@@ -52,8 +53,10 @@ export async function createPaymentIntent(req, res) {
             });
         }
 
+        const id = new mongoose.Types.ObjectId();
+
         await Transaction.create({
-            payedBy: req.user._id,
+            payedBy: id, // replace with actual user ID from req.user.id after implementing auth middleware
             transactionReference: response.data.responseBody.transactionReference,
             amount,
             email: customerEmail,
@@ -62,10 +65,15 @@ export async function createPaymentIntent(req, res) {
             expires: new Date(Date.now() + 15 * 60 * 1000), // 15 minutes from now
             status: "pending"
         });
+        return res.status(200).json({
+            message: "Transaction initiated successfully",
+            checkoutUrl: response.data.responseBody.checkoutUrl,
+            transactionReference: response.data.responseBody.transactionReference
+        });
         // Response was successful, I can now get the checkout_url
-        const checkoutUrl = response.data.responseBody.checkoutUrl;
+        // const checkoutUrl = response.data.responseBody.checkoutUrl;
         // redirect the client to the checkout_url
-        return res.redirect(checkoutUrl); // assuming you are using express JS
+        // return res.redirect(checkoutUrl); // assuming you are using express JS
     } catch (error) {
         console.log(error);
         return res.status(500).json({
@@ -107,12 +115,14 @@ export async function paymentWebhook(req, res) {
 
     // Step 3: Update DB based on verified status
     if (verified.responseBody.status === "SUCCESSFUL") {
+      console.log("Verification response data:", verify.data);
       txn.status = "success";
       const description = txn.description.toLowerCase();
       const duration = getSubscriptionExpiryTimestamp(description);
       // Update user's subscription in your user DB here
       txn.expires = new Date(duration);
     } else {
+      console.log("Payment not successful:", verified);
       txn.status = "failed";
     }
 
