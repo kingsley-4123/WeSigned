@@ -11,6 +11,7 @@ import otpRoutes from '../routes/otp_sender.js';
 import reRegistration from '../routes/re-registration.js';
 import syncRoutes from '../routes/sync.js';
 import paymentRoutes from '../routes/payment-gateway.js';
+import subRoutes from '../routes/getSubscription.js';
 import isOnline from '../routes/isOnline.js';
 import user from '../routes/user.js'
 import helmet from 'helmet';
@@ -35,6 +36,7 @@ function routeHandler(app) {
   app.use('/api/otp', otpRoutes);
   app.use('/api/isOnline', isOnline);
   app.use('/api/payment', paymentRoutes);
+  app.use('/api/subscription', subRoutes);
   app.use('/api/re-register', reRegistration);
   app.use('/api/sync', syncRoutes);
   app.use(error); 

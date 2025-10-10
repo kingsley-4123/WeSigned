@@ -6,7 +6,7 @@ const transactionSchema = new mongoose.Schema({
   transactionReference: { type: String, required: true, unique: true },
   amount: { type: Number, required: true },
   email: { type: String, required: true },
-  expires: { type: Date, required: true },
+  expires: { type: Number, required: true },
   description: {type: String, required: true},
   currency: { type: String, required: true },
   status: { type: String, default: "pending" }, // pending | success | failed

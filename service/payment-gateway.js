@@ -68,17 +68,13 @@ export async function createPaymentIntent(req, res) {
         return res.status(200).json({
             message: "Transaction initiated successfully",
             checkoutUrl: response.data.responseBody.checkoutUrl,
-            transactionReference: response.data.responseBody.transactionReference
         });
-        // Response was successful, I can now get the checkout_url
-        // const checkoutUrl = response.data.responseBody.checkoutUrl;
-        // redirect the client to the checkout_url
-        // return res.redirect(checkoutUrl); // assuming you are using express JS
+        
     } catch (error) {
         console.log(error);
         return res.status(500).json({
-            message: "Internal Server Error",
-            error: error,
+          message: "Internal Server Error",
+          error: error,
         });
     }
 }
@@ -120,7 +116,8 @@ export async function paymentWebhook(req, res) {
       const description = txn.description.toLowerCase();
       const duration = getSubscriptionExpiryTimestamp(description);
       // Update user's subscription in your user DB here
-      txn.expires = new Date(duration);
+      txn.expires = duration;
+      txn.createdAt = Date.now();
     } else {
       console.log("Payment not successful:", verified);
       txn.status = "failed";
