@@ -8,75 +8,73 @@ dotenv.config();
 
 export async function createPaymentIntent(req, res) {
   try {
-        // validate the request body
-        const { error } = validateTransaction(req.body);
+    const { error } = validateTransaction(req.body);
     if (error) {
       console.log('Validation error: ', error.details[0].message);
       return res.status(400).json({ message: error.details[0].message });
     }
 
-        const randomReference = `ref-${nanoid(20)}`;
-        const { amount, currency, customerEmail, customerName, customerPhone, description } = req.body;
-        const paymentData = JSON.stringify({
-            amount,
-            paymentReference: randomReference,
-            paymentMethods: "card,bank-transfer,ussd,qrcode",
-            customerName,
-            customerEmail,
-            customerPhoneNumber: customerPhone,
-            redirectUrl: "https://example.com",
-            description,
-            currency,
-            feeBearer: "customer",
-            metadata: {
-              firstname: customerName.split(" ")[0],
-              lastname: customerName.split(" ")[1],
-              email: customerEmail
-            }
-          });
+    const randomReference = `ref-${nanoid(20)}`;
+    const { amount, currency, customerEmail, customerName, customerPhone, description } = req.body;
+    const paymentData = JSON.stringify({
+      amount,
+      paymentReference: randomReference,
+      paymentMethods: "card,bank-transfer,ussd,qrcode",
+      customerName,
+      customerEmail,
+      customerPhoneNumber: customerPhone,
+      redirectUrl: "https://example.com",
+      description,
+      currency,
+      feeBearer: "customer",
+      metadata: {
+        firstname: customerName.split(" ")[0],
+        lastname: customerName.split(" ")[1],
+        email: customerEmail
+      }
+    });
 
-        const response = await axios.post(`${process.env.ERCASPAY_TEST_URL}/payment/initiate`, paymentData, {
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${process.env.ERCASPAY_TEST_SECRET_KEY}`
-            }
-        });
-    
-        console.log('Initiate payment response: ',response);
-        // check if the response was successful, if not, return a response to the client.
-        if (!response.data.requestSuccessful) {
-             return res.status(400).json({
-                message: response.data.responseMessage,
-                error: response.data.errorMessage,
-                 
-            });
-        }
+    const response = await axios.post(`${process.env.ERCASPAY_TEST_URL}/payment/initiate`, paymentData, {
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.ERCASPAY_TEST_SECRET_KEY}`
+      }
+    });
 
-        const id = new mongoose.Types.ObjectId();
-
-        await Transaction.create({
-            payedBy: id, // replace with actual user ID from req.user.id after implementing auth middleware
-            transactionReference: response.data.responseBody.transactionReference,
-            amount,
-            email: customerEmail,
-            description,
-            currency,
-            expires: new Date(Date.now() + 15 * 60 * 1000), // 15 minutes from now
-            status: "pending"
-        });
-        return res.status(200).json({
-            message: "Transaction initiated successfully",
-            checkoutUrl: response.data.responseBody.checkoutUrl,
-        });
-        
-    } catch (error) {
-        console.log(error);
-        return res.status(500).json({
-          message: "Internal Server Error",
-          error: error,
-        });
+    console.log('Initiate payment response: ',response);
+    // check if the response was successful, if not, return a response to the client.
+    if (!response.data.requestSuccessful) {
+      return res.status(400).json({
+        message: response.data.responseMessage,
+        error: response.data.errorMessage,
+      });
     }
+
+    const id = new mongoose.Types.ObjectId();
+
+    await Transaction.create({
+      payedBy: id, // replace with actual user ID from req.user.id after implementing auth middleware
+      transactionReference: response.data.responseBody.transactionReference,
+      amount,
+      email: customerEmail,
+      description,
+      currency,
+      expires: new Date(Date.now() + 15 * 60 * 1000), // 15 minutes from now
+      status: "pending"
+    });
+    return res.status(200).json({
+      message: "Transaction initiated successfully",
+      checkoutUrl: response.data.responseBody.checkoutUrl,
+    });
+        
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      message: "Internal Server Error",
+      error: error,
+    });
+  }
 }
 
 
