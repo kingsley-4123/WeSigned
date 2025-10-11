@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { User } from "../models/user";
-import { Transaction } from "../models/transaction";
-import auth from "../middlewares/auth";
+import { User } from "../models/user.js";
+import { Transaction } from "../models/transaction.js";
+import auth from "../middlewares/auth.js";
 const router = Router();
 
 router.get("/", auth, async (req, res) => {
