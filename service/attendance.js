@@ -12,7 +12,7 @@ export async function getAttendances(req, res) {
         .select('full_name matric_no signedAt')
         .sort({ full_name: 1 }); // Sort by full_name in ascending order
     
-    if (!attendanceList) return res.status(404).send('No attendance records found.');
+    if (!attendanceList) return res.status(404).json({message: 'No attendance records found.'});
 
     return res.json(attendanceList);    
 }
@@ -23,11 +23,11 @@ export async function markAttendance(req, res) {
     
     const { specialId } = req.params;
     const attSessionObj = await AttendanceSession.findOne({special_id: specialId});
-    if (!attSessionObj) return res.status(401).send('Attendance with the given ID was not found.');
+    if (!attSessionObj) return res.status(401).json({ message: 'Attendance with the given ID was not found.' });
 
     const alreadyMarked = await Attendance.findOne({ lecturer_id: attSessionObj.creator_id, student_id: req.user._id });
-    if (alreadyMarked) return res.status(400).send('Attendance already marked.');  
-    
+    if (alreadyMarked) return res.status(400).json({ message: 'Attendance already marked.' });
+
     const withinRange = await AttendanceSession.findOne({
         special_id: specialId,
         location: {
@@ -40,14 +40,16 @@ export async function markAttendance(req, res) {
             }
         }
     }); 
-    if (!withinRange) return res.status(400).send('You are out of range.');
+    if (!withinRange) return res.status(400).json({ message: 'You are out of range.' });
 
     const newAttendanceObj = new Attendance(lodash.pick(req.body, ['fullName', 'matricNo']));
     newAttendanceObj.lecturer_id = attSessionObj.creator_id;
     newAttendanceObj.student_id = req.user._id;
     newAttendanceObj.special_id = specialId;
 
-    durationValid(attSessionObj);
+    const result = durationValid(attSessionObj);
+    if (result.expired) return res.status(400).json({ message: result.message });
+
     const attendanceObj = await newAttendanceObj.save();
     if (!attendanceObj) return res.status(500).send('Attendance not marked.');
 

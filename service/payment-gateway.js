@@ -56,6 +56,7 @@ export async function createPaymentIntent(req, res) {
     await Transaction.create({
       payedBy: id, // replace with actual user ID from req.user.id after implementing auth middleware
       transactionReference: response.data.responseBody.transactionReference,
+      paymentReference: response.data.responseBody.paymentReference,
       amount,
       email: customerEmail,
       description,
@@ -83,10 +84,10 @@ export async function paymentWebhook(req, res) {
   try {
     console.log("Webhook received:", req.body);
     const payload = req.body; // webhook payload from ErcasPay
-    const { transaction_reference } = payload;
+    const { transaction_reference, payment_reference } = payload;
     
     // Step 1: Check if this reference exists in your DB
-    const txn = await Transaction.findOne({ transactionReference: transaction_reference });
+    const txn = await Transaction.findOne({ transactionReference: transaction_reference, paymentReference: payment_reference });
 
     if (!txn) {
       console.warn("Unknown transactionReference:", transaction_reference);

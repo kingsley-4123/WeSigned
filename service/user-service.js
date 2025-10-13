@@ -16,7 +16,7 @@ async function createUser(req, res) {
         req.session.userId = user._id; // store user ID in session
         
         user = await user.save();
-        if (!user) return res.status(500).send('User not created.');
+        if (!user) return res.status(500).json({ message: 'User not created.' });
         // Generate registration options for WebAuthn
         const options = await getRegistrationOptions(user._id);
     

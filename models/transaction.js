@@ -4,6 +4,7 @@ import Joi from "joi";
 const transactionSchema = new mongoose.Schema({
   payedBy: { type: mongoose.Schema.Types.ObjectId, ref: "users", required: true },
   transactionReference: { type: String, required: true, unique: true },
+  paymentReference: { type: String, required: true, unique: true },
   amount: { type: Number, required: true },
   email: { type: String, required: true },
   expires: { type: Number, required: true },

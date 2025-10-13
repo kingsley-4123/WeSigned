@@ -6,7 +6,7 @@ import { isoUint8Array } from '@simplewebauthn/server/helpers';
 
 // Step A: Get registration options
 export async function getRegistrationOptions (userId) {
-  if (!userId) return res.status(404).json({ error: 'User not available.' });
+  if (!userId) return res.status(404).json({ message: 'User not available.' });
 
   const user = await User.findById(userId);
   if (!user) return res.status(400).json({ message: "User not available." });

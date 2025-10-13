@@ -6,9 +6,13 @@ import lodash from 'lodash';
 
 export async function getAttendanceSession(req, res) {
     const attSessionObj = await AttendanceSession.findOne({ special_id: req.params.special_id });
-    if (!attSessionObj) return res.status(401).send('Attendance with the given ID was not found.');
+    if (!attSessionObj) return res.status(401).json({message:'Attendance with the given ID was not found.'});
 
-    remainingTime(attSessionObj);
+    const result = remainingTime(attSessionObj);
+    if (result.expired) {
+        return res.status(400).json({ message: result.message });
+    }
+    res.json(result);
 }
 
 export async function createSession(req, res) {
