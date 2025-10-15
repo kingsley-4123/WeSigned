@@ -23,7 +23,7 @@ export async function createPaymentIntent(req, res) {
       customerName,
       customerEmail,
       customerPhoneNumber: customerPhone,
-      redirectUrl: "https://example.com",
+      redirectUrl: process.env.ERCAS_CALLBACK_URL,
       description,
       currency,
       feeBearer: "customer",
