@@ -34,11 +34,11 @@ export async function createPaymentIntent(req, res) {
       }
     });
 
-    const response = await axios.post(`${process.env.ERCASPAY_TEST_URL}/payment/initiate`, paymentData, {
+    const response = await axios.post(`${process.env.ERCASPAY_URL}/payment/initiate`, paymentData, {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.ERCASPAY_TEST_SECRET_KEY}`
+        'Authorization': `Bearer ${process.env.ERCASPAY_SECRET_KEY}`
       }
     });
 
@@ -96,12 +96,12 @@ export async function paymentWebhook(req, res) {
 
     // Step 2: Verify with ErcasPay
     const verify = await axios.get(
-      `${process.env.ERCASPAY_TEST_URL}/payment/transaction/verify/${transaction_reference}`,
+      `${process.env.ERCASPAY_URL}/payment/transaction/verify/${transaction_reference}`,
       {
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.ERCASPAY_TEST_SECRET_KEY}`
+          'Authorization': `Bearer ${process.env.ERCASPAY_SECRET_KEY}`
         },
       }
     );
