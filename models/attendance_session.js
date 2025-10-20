@@ -52,10 +52,10 @@ export const AttendanceSession = mongoose.model('attendance-session', attendance
 
 export function validateSession(session) {
     const schema = Joi.object({
-        attendance_name: Joi.string().required(),
+        name: Joi.string().required(),
         duration: Joi.number().positive().required(),
         range: Joi.number().positive().default(100),
-        duration_unit: Joi.string().valid(['hours', 'minutes', 'seconds']).required(),
+        unit: Joi.string().required(),
         latitude: Joi.number().min(-90).max(90).required(),
         longitude: Joi.number().min(-180).max(180).required()
     });

@@ -23,8 +23,9 @@ export async function createSession(req, res) {
 
     const {name, duration, unit, range, latitude, longitude} = req.body.payload;
 
+    
     const sessionObj = new AttendanceSession({
-        lecturer_id: req.user.id,
+        lecturer_id: req.user._id,
         attendance_name: name,
         special_id: specialId,
         duration: duration,
