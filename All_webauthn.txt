@@ -1,0 +1,347 @@
+// MODEL
+
+import mongoose from "mongoose";
+import Joi from "joi";
+import jwt from 'jsonwebtoken';
+
+const credentialSchema = new mongoose.Schema({
+  credentialID: { type: String, required: true },          // base64url
+  credentialPublicKey: { type: String, required: true },   // base64url
+  counter: { type: Number, default: 0 },
+  transports: [String],                                     // optional
+  deviceType: { type: String },                            // optional (e.g., "John’s Phone")
+}, { _id: false });
+
+const userSchema = new mongoose.Schema({
+    firstname: {
+        type: String,
+        minlength: 5,
+        maxlength: 50,
+        required: true
+    },
+    middlename: {
+        type: String,
+        minlength: 5,
+        maxlength: 50,
+        required: true
+    },
+    surname: {
+        type: String,
+        minlength: 3,
+        maxlength: 50,
+        required: true
+    },
+    email: {
+        type: String,
+        minlength: 5,
+        maxlength: 255,
+        required: true
+    },
+    password: {
+        type: String,
+        minlength: 5,
+        required: true
+    },
+    currentChallenge: String,          // store last challenge to verify
+    credentials: [credentialSchema],
+});
+
+userSchema.methods.generateToken = function () {
+    return jwt.sign({ _id: this._id}, process.env.JWT_SECRET_KEY, {expiresIn: process.env.JWT_EXP});
+}
+
+export const User = mongoose.model('users', userSchema);
+
+export function validateUser(user) {
+    const schema = Joi.object({
+        firstname: Joi.string().min(5).max(50).required(),
+        middlename: Joi.string().min(5).max(50).required(),
+        surname: Joi.string().min(3).max(50).required(),
+        email: Joi.string().email().min(5).max(255).required(),
+        password: Joi.string().min(5).required()
+    });
+
+    return schema.validate(user);
+}
+
+
+
+// Web-authn-registration.js
+import { generateRegistrationOptions, verifyRegistrationResponse,} from '@simplewebauthn/server';
+import { User } from '../models/user.js';
+import { toBase64 } from '../utils/b64.js';
+import { isoUint8Array } from '@simplewebauthn/server/helpers'; 
+// --- 1) REGISTRATION (create a biometric-bound credential) ---
+
+// Step A: Get registration options
+export async function getRegistrationOptions (userId) {
+  if (!userId) return res.status(404).json({ message: 'User not available.' });
+
+  const user = await User.findById(userId);
+  if (!user) return res.status(400).json({ message: "User not available." });
+
+  console.log(user);
+
+  const options = await generateRegistrationOptions({
+    rpName: process.env.RP_NAME,
+    rpID: process.env.RP_ID,
+    userID: isoUint8Array.fromUTF8String(user._id.toString()),
+    userName: user.email,
+    attestationType: 'none',
+    authenticatorSelection: {
+      userVerification: 'required',
+      residentKey: 'required',
+      authenticatorAttachment: 'platform', // prefer platform (TouchID/FaceID/Android)
+    },
+    excludeCredentials: user.credentials.map((cred) => ({
+      id: cred.credentialID,
+      transports: cred.transports || [],
+    })),
+  });
+  console.log(process.env.RP_ID);
+  return options;
+};
+
+
+// Step B: Verify registration response and SAVE PUBLIC KEY
+export async function verifyRegResponse (req, res)  {
+  const userId = req.session.userId;
+  if (!userId) return res.status(401).json({ error: 'Not logged in' });
+
+  const user = await User.findById(userId);
+  const expectedChallenge = user.currentChallenge;
+
+  console.log(req.body);
+
+  const verification = await verifyRegistrationResponse({
+    response: req.body.registrationResponse, // object from the browser
+    expectedChallenge,
+    expectedOrigin: process.env.ORIGIN,
+    expectedRPID: process.env.RP_ID,
+  });
+
+  if (!verification.verified) return res.status(400).json({ ok: false });
+
+  const { registrationInfo } = verification;
+  if (!registrationInfo) return res.status(400).json({ error: 'Invalid registration response' });
+
+  console.log(registrationInfo);
+
+  const {
+    id, 
+    publicKey,
+    counter,
+    transports
+  } = registrationInfo.credential;
+
+  console.log("CredentialId", typeof id);
+  console.log("publickey", typeof publicKey);
+
+    // 👇 THIS is where you "store the public key" (and related info) in DB
+    user.credentials.push({
+    credentialID: toBase64(id),
+    credentialPublicKey: toBase64(publicKey),
+    counter,
+    transports: transports || [],
+    deviceType: registrationInfo.credentialDeviceType
+  });
+    // Clear the challenge after successful registration
+    user.currentChallenge = undefined;
+    // Save the user with the new credential
+    await user.save();
+    // Generate JWT token for the user
+    const token = user.generateToken();
+
+    // Send the token in the response header and JSON body
+    res.header('x-auth-token', token).json({ ok: true});
+    // ✅ At this point the user is registered with a biometric-bound credential
+}
+
+
+
+
+
+// Web-authn-authentication.js
+
+import { generateAuthenticationOptions, verifyAuthenticationResponse } from "@simplewebauthn/server";
+import { User } from '../models/user.js';
+import { toBase64, fromBase64 } from '../utils/b64.js';
+
+// Step A: Get authentication options
+async function getAuthenticationOptions(userId) {
+    if (!userId) return res.status(401).json({ error: 'User not available.' })
+  
+    const user = await User.findById(userId);
+    if (!user.credentials.length) {
+        return res.status(400).json({ error: 'No registered credential' });
+    }
+
+    const opts = await generateAuthenticationOptions({
+        rpID: process.env.RP_ID,
+        userVerification: 'required',
+        allowCredentials: user.credentials.map((cred) => ({
+            id: cred.credentialID,
+            transports: cred.transports || [],
+        })),
+    });
+
+    return opts;
+};
+
+
+// Step B: Verify authentication response
+async function verifyAuthResponse (req, res) {
+    const userId = req.session.userId;
+    if (!userId) return res.status(401).json({ error: 'Not logged in' });
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (!user.credentials.length) return res.status(400).json({ error: 'No registered credential' });
+
+    if (!user.currentChallenge) return res.status(400).json({ error: 'No current challenge available' });
+
+    // Ensure the user has a valid currentChallenge
+    if (typeof user.currentChallenge !== 'string') return res.status(400).json({ error: 'Invalid challenge format' });
+
+    const expectedChallenge = user.currentChallenge;
+
+    console.log(req.body.loginResponse);
+    // Find the matching authenticator by credentialID
+    const credID = toBase64(req.body.loginResponse.rawId);
+    const authenticator = user.credentials.find(c => c.credentialID === credID);
+    if (!authenticator) return res.status(400).json({ error: 'Unknown credential' });
+
+    const verification = await verifyAuthenticationResponse({
+        response: req.body.loginResponse,
+        expectedChallenge,
+        expectedOrigin: process.env.ORIGIN,
+        expectedRPID: process.env.RP_ID,
+        authenticator: {
+            credentialID: fromBase64(authenticator.credentialID),
+            credentialPublicKey: fromBase64(authenticator.credentialPublicKey),
+            counter: authenticator.counter,
+            transports: authenticator.transports || [],
+        },
+    });
+
+    if (!verification.verified) return res.status(400).json({ ok: false });
+
+    // Update signature counter (replay protection)
+    authenticator.counter = verification.authenticationInfo.newCounter;
+    user.currentChallenge = undefined;
+    await user.save();
+    const token = user.generateToken();
+    res.cookie('token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+    });
+    // Return user ID and authentication status
+    res.json({
+        ok: true,
+        userId: user._id,
+        authenticated: true,
+        token, // Return the JWT token
+    });
+    // ✅ At this point the user is strongly authenticated via biometrics
+};
+
+export { getAuthenticationOptions, verifyAuthResponse };
+
+
+
+
+// User Service
+
+import { User, validateUser } from "../models/user.js";
+import { getRegistrationOptions } from "./web-authn-registration.js";
+import bcrypt from "bcrypt";
+import lodash from 'lodash';
+
+async function createUser(req, res) {
+    const { error } = validateUser(req.body.user);
+    if (error) return res.status(400).send(error.details[0].message);
+
+    const existByEmail = await User.findOne({ email: req.body.user.email });
+    if (!existByEmail) {
+        let user = new User(lodash.pick(req.body.user, ['firstname', 'middlename', 'surname', 'email', 'password']));
+        user.password = await bcrypt.hash(user.password, 12);
+        user.currentChallenge = undefined; // initialize currentChallenge
+        user.credentials = []; // initialize credentials array
+        req.session.userId = user._id; // store user ID in session
+        
+        user = await user.save();
+        if (!user) return res.status(500).json({ message: 'User not created.' });
+        // Generate registration options for WebAuthn
+        const options = await getRegistrationOptions(user._id);
+    
+        user.currentChallenge = options.challenge; // Store challenge for later verification
+        await user.save(); // Save the challenge in the user document
+        const userID = user._id;
+        res.json({
+            user: lodash.pick(user, ['firstname', 'middlename', 'surname', 'email']),
+            userID,
+            options
+        });
+    } else if (existByEmail && existByEmail.credentials.length === 0) {
+        req.session.userId = existByEmail._id; // store user ID in session
+    
+        const options = await getRegistrationOptions(existByEmail._id);
+    
+        existByEmail.currentChallenge = options.challenge; // Store challenge for later verification
+        await existByEmail.save(); // Save the challenge in the user document
+        const userID = existByEmail._id;
+        res.json({
+            user: lodash.pick(existByEmail, ['firstname', 'middlename', 'surname', 'email']),
+            userID,
+            options
+        });
+    } else {
+        res.status(400).json({ message: "User already registered." });
+    }
+}
+
+export default createUser;
+
+
+
+
+// Login
+import bcrypt from 'bcrypt';
+import { User } from '../models/user.js';
+import Joi from 'joi';
+import lodash from 'lodash';
+import { getAuthenticationOptions } from './web-authn-authentication.js';
+
+async function verifyUser(req, res) {
+    const { error } = validateLogin(req.body);
+    if (error) return res.status(400).send(error.details[0].message);
+
+    const user = await User.findOne({ email: req.body.email });
+    if (!user) return res.status(401).send('Invalid email.');
+
+    req.session.userId = user._id; // Store user ID in session
+
+    const authOptions = await getAuthenticationOptions(user._id);
+    if (!authOptions) return res.status(400).send('No authentication options available.');
+    user.currentChallenge = authOptions.challenge; // Store challenge for later verification
+    const signedInUser = lodash.pick(user, ['firstname', 'middlename', 'surname', 'email']);
+    await user.save();
+    // Return authentication options to the clientR
+    res.json({
+        authOptions,
+        user: signedInUser,
+        userId: user._id,
+    });
+
+}
+
+function validateLogin(credentials) {
+    const schema = Joi.object({
+        email: Joi.string().email().min(5).max(255).required()
+    });
+
+    return schema.validate(credentials);
+}
+
+export default verifyUser;

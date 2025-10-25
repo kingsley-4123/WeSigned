@@ -53,7 +53,7 @@ export async function createPaymentIntent(req, res) {
 
 
     await Transaction.create({
-      payedBy: req.user.id, // replace with actual user ID from req.user.id after implementing auth middleware
+      payedBy: req.user._id, // replace with actual user ID from req.user.id after implementing auth middleware
       transactionReference: response.data.responseBody.transactionReference,
       paymentReference: response.data.responseBody.paymentReference,
       amount,

@@ -19,7 +19,7 @@ export async function getAttendances(req, res) {
 
 export async function markAttendance(req, res) {
     const {error} = validateAttendance(req.body);
-    if (error) return res.status(400).send(error.details[0].message);
+    if (error) return res.status(400).json({ message: error.details[0].message });
     
     const { specialId } = req.params;
     const attSessionObj = await AttendanceSession.findOne({special_id: specialId});
@@ -51,10 +51,10 @@ export async function markAttendance(req, res) {
     if (result.expired) return res.status(400).json({ message: result.message });
 
     const attendanceObj = await newAttendanceObj.save();
-    if (!attendanceObj) return res.status(500).send('Attendance not marked.');
+    if (!attendanceObj) return res.status(500).json({ message: 'Attendance not marked.' });
 
     let lecturer = await User.findById({_id: attSessionObj.creator_id});
-    if (!lecturer) return res.status(404).send('Lecturer not found.');
+    if (!lecturer) return res.status(404).json({ message: 'Lecturer not found.' });
     lecturer = lodash.pick(lecturer, ['firstname', 'middlename', 'surname']);
     lecturer = `${lecturer.surname} ${lecturer.middlename ? lecturer.middlename + ' ' : ''}${lecturer.firstname}`;  
 

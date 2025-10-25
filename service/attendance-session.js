@@ -17,7 +17,7 @@ export async function getAttendanceSession(req, res) {
 
 export async function createSession(req, res) {
     const { error } = validateSession(req.body.payload);
-    if (error) return res.status(400).send(error.details[0].message);
+    if (error) return res.status(400).json({ message: error.details[0].message });
 
     const specialId = await createUniqueSpecialId();
 
@@ -38,7 +38,7 @@ export async function createSession(req, res) {
     }); 
 
     let lecturer = await User.findById(req.user._id);
-    if (!lecturer) return res.status(404).send('Lecturer not found.');
+    if (!lecturer) return res.status(404).json({ message: 'Lecturer not found.' });
     lecturer = lodash.pick(lecturer, ['firstname', 'middlename', 'surname']);
     lecturer = `${lecturer.surname} ${lecturer.middlename ? lecturer.middlename + ' ' : ''}${lecturer.firstname}`;  
 

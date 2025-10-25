@@ -1,4 +1,5 @@
 import { OTP } from "../models/otp.js";
+import {User} from "../models/user.js";
 
 async function sendOTPMail(email, otp) {
     const url = 'https://api.useplunk.com/v1/send';
@@ -7,8 +8,8 @@ async function sendOTPMail(email, otp) {
         headers: {'Content-Type': 'application/json', Authorization: `Bearer ${process.env.PLUNK_SECRET_KEY}`},
         body: JSON.stringify({
             to: email,
-            subject: otp,
-            body: "Your code expires in 5 minutes."
+            subject: 'Reset Password',
+            body: `Your OTP ${otp}. Code expires in 5 minutes.`
         }), 
     };
 
@@ -31,6 +32,9 @@ let userEmail;
 
 export async function sendOTP(req, res) {
     userEmail = req.body.email;
+    const user = await User.findOne({ email: userEmail });
+    if (!user) return res.status(400).json({ message: "User not registered.", ok: false });
+
     const otp = otpGenerator();
 
     const newOTP = new OTP({
@@ -41,7 +45,7 @@ export async function sendOTP(req, res) {
     await newOTP.save();
 
     const result = await sendOTPMail(userEmail, otp);
-    return res.json({ message: result });
+    return res.json({ message: result, ok: true });
 }
 
 export async function verifyOTP(req, res) {
@@ -58,4 +62,14 @@ export async function verifyOTP(req, res) {
     
     await OTP.deleteOne({ email: userEmail });
     res.json({ success: true, message: "OTP verified successfully", email: userEmail });
+}
+
+export async function updatePassword(req, res) {
+    const { email, newPassword } = req.body;
+    const user = await User.findOne({ email: email });
+    if (!user) return res.status(400).json({ message: "User not available." });
+
+    user.password = newPassword;
+    await user.save();
+    res.json({message: "Password updated successfully.", ok: true});
 }
