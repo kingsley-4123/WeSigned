@@ -28,6 +28,9 @@ const userSchema = new mongoose.Schema({
         maxlength: 255,
         required: true
     },
+    school: {
+        type: String
+    },
     password: {
         type: String,
         minlength: 5,
@@ -47,7 +50,8 @@ export function validateUser(user) {
         middlename: Joi.string().min(5).max(50).required(),
         surname: Joi.string().min(3).max(50).required(),
         email: Joi.string().email().min(5).max(255).required(),
-        password: Joi.string().min(5).required()
+        password: Joi.string().min(5).required(),
+        school: Joi.string()
     });
 
     return schema.validate(user);

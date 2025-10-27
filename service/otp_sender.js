@@ -1,5 +1,6 @@
 import { OTP } from "../models/otp.js";
 import {User} from "../models/user.js";
+import bcrypt from "bcrypt";
 
 async function sendOTPMail(email, otp) {
     const url = 'https://api.useplunk.com/v1/send';
@@ -16,7 +17,7 @@ async function sendOTPMail(email, otp) {
     try {
         const response = await fetch(url, options);
         const data = await response.json();
-        console.log(data);
+        console.log('EMAIL SENDING', data);
         return data;
     } catch (error) {
         console.error(error);
@@ -69,7 +70,7 @@ export async function updatePassword(req, res) {
     const user = await User.findOne({ email: email });
     if (!user) return res.status(400).json({ message: "User not available." });
 
-    user.password = newPassword;
+    user.password = await bcrypt.hash(newPassword, 12);
     await user.save();
     res.json({message: "Password updated successfully.", ok: true});
 }
