@@ -7,7 +7,7 @@ const router = Router();
 
 //add auth and subscription middleware.
 
-router.get('/:special_id/:lecturer_id', auth, checkSub, getAttendances);
-router.post('/:special_id/sign', auth, checkSub, markAttendance);
+router.get('/:specialId', auth, checkSub, getAttendances);
+router.post('/:specialId/sign', auth, checkSub, markAttendance);
 
 export default router;

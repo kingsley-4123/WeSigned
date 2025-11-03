@@ -42,7 +42,7 @@ export async function createPaymentIntent(req, res) {
       }
     });
 
-    console.log('Initiate payment response: ',response);
+    console.log('Initiate payment response: ',response.data);
     // check if the response was successful, if not, return a response to the client.
     if (!response.data.requestSuccessful) {
       return res.status(400).json({
@@ -82,8 +82,7 @@ export async function createPaymentIntent(req, res) {
 export async function paymentWebhook(req, res) {
   try {
     console.log("Webhook received:", req.body);
-    const payload = req.body; // webhook payload from ErcasPay
-    const { transaction_reference, payment_reference } = payload;
+    const { transaction_reference, payment_reference } = req.body;
     
     // Step 1: Check if this reference exists in your DB
     const txn = await Transaction.findOne({ transactionReference: transaction_reference, paymentReference: payment_reference });
@@ -108,7 +107,7 @@ export async function paymentWebhook(req, res) {
     const verified = verify.data;
 
     // Step 3: Update DB based on verified status
-    if (verified.responseBody.status === "SUCCESSFUL") {
+    if (verified.responseBody.status === "SUCCESSFUL" || verified.requestSuccessful) {
       console.log("Verification response data:", verify.data);
       txn.status = "success";
       const description = txn.description.toLowerCase();

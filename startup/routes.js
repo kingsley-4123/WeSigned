@@ -19,7 +19,7 @@ import helmet from 'helmet';
 function routeHandler(app) {
   app.use(express.json());
   app.use(helmet());
-  app.use(cors({ origin: ['http://localhost:8000', 'http://10.98.29.217:8000/'], credentials: true }));
+  app.use(cors({ origin: process.env.ORIGIN, credentials: true }));
   app.use(cookieSession({
     name: 'sess',
     keys: [process.env.SESSION_SECRET],

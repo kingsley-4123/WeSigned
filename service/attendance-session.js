@@ -5,17 +5,21 @@ import { remainingTime } from "../utils/attendance-duration-calculator.js";
 import lodash from 'lodash';
 
 export async function getAttendanceSession(req, res) {
-    const attSessionObj = await AttendanceSession.findOne({ special_id: req.params.special_id });
-    if (!attSessionObj) return res.status(401).json({message:'Attendance with the given ID was not found.'});
+    const {specialId} = req.params;
+    console.log("GET_SESSIONID", specialId);
+    const attSessionObj = await AttendanceSession.findOne({ special_id: specialId });
+    if (!attSessionObj) return res.status(404).json({message:'Attendance with the given ID was not found.'});
 
     const result = remainingTime(attSessionObj);
     if (result.expired) {
         return res.status(400).json({ message: result.message });
     }
-    res.json(result);
+    
+    return res.json(result);
 }
 
 export async function createSession(req, res) {
+    console.log('SESSION_PAYLOAD', req.body.payload);
     const { error } = validateSession(req.body.payload);
     if (error) return res.status(400).json({ message: error.details[0].message });
 
@@ -25,7 +29,7 @@ export async function createSession(req, res) {
 
     
     const sessionObj = new AttendanceSession({
-        lecturer_id: req.user._id,
+        creator_id: req.user._id,
         attendance_name: name,
         special_id: specialId,
         duration: duration,
@@ -37,6 +41,8 @@ export async function createSession(req, res) {
         }
     }); 
 
+    const savedSessionObj = await sessionObj.save();
+
     let lecturer = await User.findById(req.user._id);
     if (!lecturer) return res.status(404).json({ message: 'Lecturer not found.' });
     lecturer = lodash.pick(lecturer, ['firstname', 'middlename', 'surname']);
@@ -46,8 +52,9 @@ export async function createSession(req, res) {
     const options = { weekday: 'short', year: 'numeric', month: 'long', day: 'numeric' };
     const formattedDate = today.toLocaleDateString('en-US', options).replace(","," ");
 
-    const attSession = lodash.pick(sessionObj, ['lecturer_id', 'special_id', 'duration', 'attendance_name']);
+    const attSession = lodash.pick(savedSessionObj, ['lecturer_id', 'special_id', 'duration', 'attendance_name', 'duration_unit', 'createdAt']);
     return res.json({
+        success: true,
         attSession,
         lecturer,
         date: formattedDate,

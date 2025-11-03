@@ -5,8 +5,8 @@ import checkSub from '../middlewares/subscription.js';
 
 const router = Router();
 
-router.get('/:specialId', auth, excelExport);
-router.get('/:specialId/:attendanceName', auth, offlineExcelExport);
+router.get('/:specialId', auth, checkSub, excelExport);
+router.get('/:specialId/:attendanceName', auth, checkSub, offlineExcelExport);
 
 
 export default router;

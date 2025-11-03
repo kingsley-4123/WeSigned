@@ -35,6 +35,15 @@ const userSchema = new mongoose.Schema({
         type: String,
         minlength: 5,
         required: true
+    },
+    status: {
+        type: String,
+        enum: ['active', 'pending'],
+        default: 'active'
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now
     }
 });
 

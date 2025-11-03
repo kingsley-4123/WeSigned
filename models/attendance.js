@@ -27,7 +27,7 @@ const attendanceSchema = new mongoose.Schema({
         type: String
     },
     signedAt: {
-        type: Date,
+        type: Number,
         default: Date.now  
     }
 });
@@ -42,6 +42,8 @@ export function validateAttendance(attendance) {
     const schema = Joi.object({
         full_name: Joi.string().min(10).required(),
         matric_no: Joi.string().min(11).required(),
+        latitude: Joi.number().required(),
+        longitude: Joi.number().required()
     });
 
     return schema.validate(attendance);

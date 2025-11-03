@@ -11,7 +11,7 @@ const transactionSchema = new mongoose.Schema({
   description: {type: String, required: true},
   currency: { type: String, required: true },
   status: { type: String, default: "pending" }, // pending | success | failed
-  createdAt: { type: Date, default: Date.now }
+  createdAt: { type: Number, default: Date.now }
 });
 
 transactionSchema.index({ payedBy: 1, createdAt: -1 }, {partialFilterExpression: { status: "success" }});

@@ -7,6 +7,7 @@ import lodash from 'lodash';
 
 export async function getAttendances(req, res) {
     const {specialId } = req.params;
+    console.log('SPECIALID', specialId);
 
     const attendanceList = await Attendance.find({ special_id: specialId, lecturer_id: req.user._id  })
         .select('full_name matric_no signedAt')
@@ -14,7 +15,7 @@ export async function getAttendances(req, res) {
     
     if (!attendanceList) return res.status(404).json({message: 'No attendance records found.'});
 
-    return res.json(attendanceList);    
+    return res.json({ attendanceList, success: true });    
 }
 
 export async function markAttendance(req, res) {
@@ -25,7 +26,7 @@ export async function markAttendance(req, res) {
     const attSessionObj = await AttendanceSession.findOne({special_id: specialId});
     if (!attSessionObj) return res.status(401).json({ message: 'Attendance with the given ID was not found.' });
 
-    const alreadyMarked = await Attendance.findOne({ lecturer_id: attSessionObj.creator_id, student_id: req.user._id });
+    const alreadyMarked = await Attendance.findOne({ lecturer_id: attSessionObj.creator_id, student_id: req.user._id, special_id: specialId });
     if (alreadyMarked) return res.status(400).json({ message: 'Attendance already marked.' });
 
     const withinRange = await AttendanceSession.findOne({
@@ -42,13 +43,14 @@ export async function markAttendance(req, res) {
     }); 
     if (!withinRange) return res.status(400).json({ message: 'You are out of range.' });
 
-    const newAttendanceObj = new Attendance(lodash.pick(req.body, ['fullName', 'matricNo']));
+    const result = durationValid(attSessionObj);
+    console.log("REESULT", result);
+    if (result.expired) return res.status(400).json({ message: result.message });
+
+    const newAttendanceObj = new Attendance(lodash.pick(req.body, ['full_name', 'matric_no']));
     newAttendanceObj.lecturer_id = attSessionObj.creator_id;
     newAttendanceObj.student_id = req.user._id;
     newAttendanceObj.special_id = specialId;
-
-    const result = durationValid(attSessionObj);
-    if (result.expired) return res.status(400).json({ message: result.message });
 
     const attendanceObj = await newAttendanceObj.save();
     if (!attendanceObj) return res.status(500).json({ message: 'Attendance not marked.' });
@@ -63,7 +65,7 @@ export async function markAttendance(req, res) {
     const formattedDate = today.toLocaleDateString('en-US', options).replace(","," ");
 
     return res.json({
-        user: lodash.pick(attendanceObj, ['full_name', 'matric_no']),
+        success: true,
         student: {
             lecturer: lecturer,
             date: formattedDate,

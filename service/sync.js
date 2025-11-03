@@ -65,10 +65,10 @@ export async function getSyncedAttendance(req, res) {
         special_id: specialId,
         attendance_name: attendanceName
     })
-        .select("full_name matric_no signedAt offlineSignedAt")
+        .select("full_name matric_no signedAt")
         .sort("full_name");
     
-    const newAttendance = attendance.filter((s) => s.signedAt > attSession.createdAt);
+    const newAttendance = attendance.filter((s) => s.signedAt <= attSession.createdAt);
     if (newAttendance.length === 0) return res.status(404).json({ message: "Sorry, attendance not available." });
 
     res.json({ success: true, attendanceList: newAttendance });

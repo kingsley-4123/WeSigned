@@ -37,7 +37,7 @@ const attendanceSchema = new mongoose.Schema({
         }
     },
     createdAt: {
-        type: Date,
+        type: Number,
         default: Date.now
     }
 });
@@ -56,8 +56,8 @@ export function validateSession(session) {
         duration: Joi.number().positive().required(),
         range: Joi.number().positive().default(100),
         unit: Joi.string().required(),
-        latitude: Joi.number().min(-90).max(90).required(),
-        longitude: Joi.number().min(-180).max(180).required()
+        latitude: Joi.number().required(),
+        longitude: Joi.number().required()
     });
 
     return schema.validate(session);

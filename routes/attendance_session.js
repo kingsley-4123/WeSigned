@@ -4,7 +4,7 @@ import checkSub from '../middlewares/subscription.js';
 import { getAttendanceSession, createSession } from '../service/attendance-session.js';
 const router = Router();
 
-router.get('/:special_id', auth, checkSub, getAttendanceSession);
+router.get('/:specialId', auth, checkSub, getAttendanceSession);
 router.post('/', auth, checkSub, createSession);
 
-export default router;
+export default router; 

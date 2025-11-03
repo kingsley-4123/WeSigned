@@ -33,7 +33,7 @@ export async function excelExport(req, res) {
             SerialNo: i + 1,
             fullName: s.full_name,
             studentId: s.matric_no,
-            signedAt: s.signedAt.toISOString(),
+            signedAt: new Date(s.signedAt).toISOString(),
         }));
         ws.getRow(1).font = { bold: true };
 
@@ -47,14 +47,17 @@ export async function excelExport(req, res) {
             column.width = maxLength + 2;
         });
 
+        const fileName = `${attSession.attendance_name}_${dayjs().format("YYYY-MM-DD_HH-mm")}.xlsx`;
+        console.log('FILENAME', fileName);
         res.setHeader(
         "Content-Type",
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         );
-        res.attachment(`${attSession.attendance_name}_${dayjs().format("YYYY-MM-DD_HH-mm")}.xlsx`);
+        res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
         await wb.xlsx.write(res);
         res.end();
     } catch (err) {
+        console.error(err);
         res.status(500).json({ message: err });
     }
 }
@@ -102,14 +105,18 @@ export async function offlineExcelExport(req, res) {
             column.width = maxLength + 2;
         });
 
+        const fileName = `${attSession.attendance_name}_${dayjs().format("YYYY-MM-DD_HH-mm")}.xlsx`;
+
+        console.log('FILENAME', fileName);
         res.setHeader(
         "Content-Type",
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         );
-        res.attachment(`${attSession.attendance_name}_${dayjs().format("YYYY-MM-DD_HH-mm")}.xlsx`);
+        res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
         await wb.xlsx.write(res);
         res.end();
     } catch (err) {
+        console.error(err);
         res.status(500).json({ message: err });
     }
 }
