@@ -1,2 +1,6 @@
 In the webhook endpoint, don't get only the transaction reference from the payload get also the user email.
 to query the db with.
+
+mongodb+srv://kings_choice:Kings_Choice_4123@cluster0.owgwqoc.mongodb.net/
+
+mongodb+srv://WeSigned:WeSigned4123@cluster0.tonzw4r.mongodb.net/?appName=WeSigned

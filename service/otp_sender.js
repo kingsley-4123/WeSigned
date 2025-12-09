@@ -2,14 +2,14 @@ import { OTP } from "../models/otp.js";
 import {User} from "../models/user.js";
 import bcrypt from "bcrypt";
 
-async function sendOTPMail(email, otp) {
+async function sendOTPMail(email, otp, subject) {
     const url = 'https://api.useplunk.com/v1/send';
     const options = {
         method: 'POST',
         headers: {'Content-Type': 'application/json', Authorization: `Bearer ${process.env.PLUNK_SECRET_KEY}`},
         body: JSON.stringify({
             to: email,
-            subject: 'Reset Password',
+            subject,
             body: `Your OTP ${otp}. Code expires in 5 minutes.`
         }), 
     };
@@ -33,8 +33,11 @@ let userEmail;
 
 export async function sendOTP(req, res) {
     userEmail = req.body.email;
-    const user = await User.findOne({ email: userEmail });
-    if (!user) return res.status(400).json({ message: "User not registered.", ok: false });
+    const { subject, type } = req.body;
+    if (type !== 'signup' && type !== 'reReg') {
+        const user = await User.findOne({ email: userEmail });
+        if (!user) return res.status(400).json({ message: "User not registered.", ok: false });    
+    }
 
     const otp = otpGenerator();
 
@@ -45,7 +48,7 @@ export async function sendOTP(req, res) {
     });
     await newOTP.save();
 
-    const result = await sendOTPMail(userEmail, otp);
+    const result = await sendOTPMail(userEmail, otp, subject);
     return res.json({ message: result, ok: true });
 }
 
@@ -55,9 +58,10 @@ export async function verifyOTP(req, res) {
     
     const user = await OTP.findOne({ email: userEmail, otp: otp });
     console.log("OTP", otp);
+    if (!user) return res.status(400).json({ success: false, message: "User not available." });
+
     console.log("User Otp", user.otp);
     console.log(typeof user.otp, typeof otp);
-    if (!user) return res.status(400).json({ success: false, message: "User not available." });
     if (user.expires < Date.now()) return res.status(400).json({success: false, message: "OTP code expired."});
     if(user.otp !== otp) return res.status(400).json({success: false, message: "Invalid Code."});
     

@@ -1,8 +1,9 @@
 import { User, validateUser } from "../models/user.js";
-import lodash from 'lodash'
+import lodash from 'lodash';
 import agenda from "../startup/agenda.js";
+import bcrypt from 'bcrypt';
 
-export default async function reRegister(req, res){
+export async function reRegister(req, res){
     const { error } = validateUser(req.body);
     if (error) return res.status(400).json({ message: error.details[0].message });
     const { firstname, middlename, surname, email, password, school } = req.body;
@@ -28,5 +29,29 @@ export default async function reRegister(req, res){
         message: "Re-registration successful. Account will activate in 12 hours.",
         ok: true,
         userId: user._id
+    });
+}
+
+
+export async function registerLocal(req, res) {
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ email: email });
+    if (!user) return res.status(404).json({ message: "User with this username does not exist" });
+
+    const validPassword = await bcrypt.compare(password, user.password);
+    if (!validPassword) return res.status(400).json({ message: "Wrong password." });
+    
+    user.status = 'pending';
+    await user.save();
+
+    await agenda.schedule('in 12 hours', 'activate pending user', { userId: user._id });
+    
+    res.json({
+        user: lodash.pick(user, ['firstname', 'middlename', 'surname', 'email', 'school']),
+        userPassword: password,
+        ok: true,
+        userId: user._id,
+        message: "Success. Account will activate in 12 hours"
     });
 }
