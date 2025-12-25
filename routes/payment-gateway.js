@@ -4,7 +4,7 @@ import auth from "../middlewares/auth.js";
 
 const router = Router();
 
-router.post("/payment-intent",  auth, createPaymentIntent);
+router.post("/payment-intent", auth, createPaymentIntent);
 router.post("/payment-webhook", paymentWebhook);
 
 export default router;

@@ -4,7 +4,7 @@ import { Transaction } from '../models/transaction.js';
 export default async function checkSub(req, res, next) {
 	try {
 		// You may need to adjust this depending on how you attach user info to req
-        const userId = req.user._id;
+    const userId = req.user._id;
 		if (!userId) {
 			return res.status(401).json({ message: 'User not authenticated' });
 		}
@@ -17,7 +17,7 @@ export default async function checkSub(req, res, next) {
         // Fetch the latest successful transaction for the user
         const latestTransaction = await Transaction.findOne({ payedBy: userId, status: "success" }).sort({ createdAt: -1 });
         if (!latestTransaction || latestTransaction.expires < Date.now()) {
-            return res.status(403).json({ message: 'Subscription expired or no valid transaction found. Please renew to continue.' });
+            return res.status(403).json({ message: 'Subscribe' });
         }
 		
 		// Subscription is valid, proceed
