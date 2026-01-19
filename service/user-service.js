@@ -8,9 +8,9 @@ async function createUser(req, res) {
 
     const existByEmail = await User.findOne({ email: req.body.user.email });
     if (!existByEmail) {
-        let user = new User(lodash.pick(req.body.user, ['firstname', 'middlename', 'surname', 'email', 'school']));
+        let user = new User(lodash.pick(req.body.user, ['firstname', 'middlename', 'surname', 'email']));
         user.password = await bcrypt.hash(req.body.user.password, 12);
-        
+        user.school = req.body.user.school? req.body.user.school :"";
         user = await user.save();
         const userID = user._id;
         const token = user.generateToken();

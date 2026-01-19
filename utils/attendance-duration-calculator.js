@@ -34,17 +34,16 @@ export function remainingTime(attendance) {
   const remainingMs = endTime - now;
 
   if (remainingMs <= 0) {
-    return { expired: true, message: 'Attendance has expired' };
+    return { ok: false, expired: true, message: 'Attendance has expired' };
   } else {
-    return { expired: false, message: "Attendance still active" };
+    return {  
+      ok: true, 
+      expired: false, 
+      attendance_name: attendance.attendance_name,
+      createdAt: attendance.createdAt,
+      duration: attendance.duration,
+      unit: attendance.duration_unit,
+      message: "Attendance still active" };
   }
-
-  return {
-    ok: true,
-    attendance_name: attendance.attendance_name,
-    createdAt: attendance.createdAt,
-    duration: attendance.duration,
-    unit: attendance.duration_unit
-  };
 }
 

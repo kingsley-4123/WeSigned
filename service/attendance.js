@@ -10,7 +10,7 @@ export async function getAttendances(req, res) {
     console.log('SPECIALID', specialId);
 
     const attendanceList = await Attendance.find({ special_id: specialId, lecturer_id: req.user._id  })
-        .select('full_name matric_no signedAt')
+        .select('full_name matric_no signedAt -_id')
         .sort({ full_name: 1 }); // Sort by full_name in ascending order
     
     if (!attendanceList) return res.status(404).json({message: 'No attendance records found.'});

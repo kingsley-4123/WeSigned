@@ -5,6 +5,6 @@ import { getAttendanceSession, createSession } from '../service/attendance-sessi
 const router = Router();
 
 router.get('/:specialId', auth, checkSub, getAttendanceSession);
-router.post('/', auth, checkSub, createSession);
+router.post('/', auth, checkSub, createSession); 
 
 export default router; 
