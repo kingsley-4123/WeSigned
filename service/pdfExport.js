@@ -28,7 +28,7 @@ export async function pdfExport(req, res) {
         if (!students) return res.status(401).json({ message: "No attedance record found." });
 
         const body = [
-            ["Serial No","Full Name", "Student ID", "Signed At"],
+            ["Serial No","Full Name", "Reg No", "Signed At"],
             ...students.map((s, i) => [
                 i + 1,
                 s.full_name,
@@ -74,7 +74,7 @@ export async function offlinePdfExport(req, res) {
         if (!students) return res.status(401).json({ message: "No attedance record found." });
 
         const body = [
-            ["Serial No","Full Name", "Student ID", "Signed At"],
+            ["Serial No","Full Name", "Reg No", "Signed At"],
             ...students.map((s, i) => [
                 i + 1,
                 s.full_name,

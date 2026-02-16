@@ -25,15 +25,15 @@ export async function excelExport(req, res) {
         ws.columns = [
             { header: "Serial No", key: "SerialNo"},
             { header: "Full Name", key: "fullName" },
-            { header: "Student ID", key: "studentId"},
+            { header: "Reg No", key: "regNo"},
             { header: "Signed At", key: "signedAt"},
         ];
 
         students.forEach((s, i) => ws.addRow({
             SerialNo: i + 1,
             fullName: s.full_name,
-            studentId: s.matric_no,
-            signedAt: new Date(s.signedAt).toISOString(),
+            regNo: s.matric_no,
+            signedAt: dayjs(s.signedAt).format("YYYY-MM-DD HH:mm"),
         }));
         ws.getRow(1).font = { bold: true };
 
@@ -69,8 +69,8 @@ export async function offlineExcelExport(req, res) {
         const attSession = await AttendanceSession.findOne({ special_id: specialId });
         if (!attSession) return res.status(404).json({ message: "No session found." });
 
-        const students = await Attendance.find({ special_id:specialId, lecturer_id:attSession.creator_id })
-            .select('-full_name matric_no signedAt')
+        const students = await Attendance.find({ special_id:specialId, attendance_name: attendanceName })
+            .select('full_name matric_no signedAt')
             .sort('full_name');
         if (!students) return res.status(404).json({ message: "No attedance record found." });
         console.log(students);
@@ -83,15 +83,15 @@ export async function offlineExcelExport(req, res) {
         ws.columns = [
             { header: "Serial No", key: "SerialNo"},
             { header: "Full Name", key: "fullName" },
-            { header: "Student ID", key: "studentId"},
+            { header: "Reg No", key: "regNo"},
             { header: "Signed At", key: "signedAt"},
         ];
 
         students.forEach((s, i) => ws.addRow({
             SerialNo: i + 1,
             fullName: s.full_name,
-            studentId: s.matric_no,
-            signedAt: s.signedAt.toISOString(),
+            regNo: s.matric_no,
+            signedAt: dayjs(s.signedAt).format("YYYY-MM-DD HH:mm"),
         }));
         ws.getRow(1).font = { bold: true };
 
